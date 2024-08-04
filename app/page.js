@@ -7,8 +7,10 @@ import { collection, query, getDocs, getDoc, deleteDoc, doc, setDoc } from "fire
 
 export default function Home() {
   const [pantry, setPantry] = useState([]);
+  const [filteredPantry, setFilteredPantry] = useState([]);
   const [open, setOpen] = useState(false);
   const [itemName, setItemName] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
 
   const updatePantry = async () => {
     const snapshot = query(collection(firestore, 'pantry'));
@@ -21,6 +23,7 @@ export default function Home() {
       });
     });
     setPantry(pantryList);
+    setFilteredPantry(pantryList);
   };
 
   const addItem = async (item) => {
@@ -52,6 +55,14 @@ export default function Home() {
   useEffect(() => {
     updatePantry();
   }, []);
+
+  useEffect(() => {
+    if (searchQuery) {
+      setFilteredPantry(pantry.filter(item => item.name.toLowerCase().includes(searchQuery.toLowerCase())));
+    } else {
+      setFilteredPantry(pantry);
+    }
+  }, [searchQuery, pantry]);
 
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
@@ -95,9 +106,18 @@ export default function Home() {
           </Stack>
         </Box>
       </Modal>
-      <Button variant="contained" onClick={handleOpen} sx={{ bgcolor: "#8B4513", color: "#FFF" }}>
-        Add New Item
-      </Button>
+      <Box width="100%" display="flex" justifyContent="flex-end" p={2} position="relative" bgcolor="#FFC0CB">
+        <TextField
+          variant="outlined"
+          placeholder="Search pantry..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          sx={{ width: 200, bgcolor: '#fff' }} // Shorter search bar
+        />
+      </Box>
+      <Button variant="contained" onClick={handleOpen} sx={{ bgcolor: "#8B4513", color: "#FFF", mb: 2 }}>
+          Add New Item
+        </Button>
       <Box border="1px solid #333" p={2} display="flex" flexDirection="column" alignItems="center">
         <Box width="800px" height="100px" bgcolor="#8B4513" display="flex" justifyContent="center" alignItems="center" p={2}>
           <Typography variant="h4" color="#FFF" textAlign="center" noWrap>
@@ -105,7 +125,7 @@ export default function Home() {
           </Typography>
         </Box>
         <Stack width="300px" height="300px" spacing={2} overflow="auto" alignItems="center">
-          {pantry.map(({ name, quantity }) => (
+          {filteredPantry.map(({ name, quantity }) => (
             <Box
               key={name}
               width="100%"
